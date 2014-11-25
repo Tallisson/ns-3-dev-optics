@@ -1,0 +1,20 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    obj = bld.create_ns3_program('optics-basic-example', ['optics', 'core', 'network', 'internet'])
+    obj.source = 'optics-basic-example.cc'
+
+    obj = bld.create_ns3_program('optics-dijkstra-example', ['optics', 'core', 'network', 'internet'])
+    obj.source = 'optics-dijkstra-example.cc'
+
+    obj = bld.create_ns3_program('optics-onu-olt-example', ['optics', 'core', 'network', 'internet'])
+    obj.source = 'optics-onu-olt-example.cc'
+
+    obj = bld.create_ns3_program('optics-oxc-example', ['optics', 'core', 'network', 'internet'])
+    obj.source = 'optics-oxc-example.cc'
+
+    obj = bld.create_ns3_program('optics-bihtel-2012-example', ['optics', 'core', 'network', 'internet', 'applications'])
+    obj.source = 'optics-bihtel-2012-example.cc'
+
+    obj = bld.create_ns3_program('optics-oxc-control-example', ['optics', 'core', 'network', 'internet', 'applications'])
+    obj.source = 'optics-oxc-control-example.cc'

@@ -1,0 +1,62 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+# def options(opt):
+#     pass
+
+def configure(conf):
+    conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
+
+def build(bld):
+    module = bld.create_ns3_module('optics', ['core', 'network', 'point-to-point', 'propagation'])
+    module.source = [
+        'model/wdm-bidirectional-channel.cc',
+        'model/wdm-channel.cc',
+        'model/wdm-control-channel.cc',
+        'model/wdm-control-net-device.cc',
+        'model/wdm-demux-net-device.cc',
+        'model/wdm-edge-net-device.cc',
+        'model/wdm-mux-net-device.cc',
+        'model/wdm-net-device.cc',
+        'model/wdm-olt-net-device.cc',
+        'model/wdm-onu-net-device.cc',
+        'model/wdm-oxc-net-device.cc',
+        'model/wdm-phy.cc',
+        'model/wdm-splitter-net-device.cc',
+        'model/wdm-pon-splitter-net-device.cc',
+        'model/wdm-passthrough-net-device.cc',
+        'model/wdm-unidirectional-channel.cc',
+        'helper/optics-helper.cc',
+        ]
+
+    module_test = bld.create_ns3_module_test_library('optics')
+    module_test.source = [
+        'test/optics-test-suite.cc',
+        ]
+
+    headers = bld.new_task_gen(features=['ns3header'])
+    headers.module = 'optics'
+    headers.source = [
+        'model/wdm-bidirectional-channel.h',
+        'model/wdm-channel.h',
+        'model/wdm-control-channel.h',
+        'model/wdm-control-net-device.h',
+        'model/wdm-demux-net-device.h',
+        'model/wdm-edge-net-device.h',
+        'model/wdm-mux-net-device.h',
+        'model/wdm-net-device.h',
+        'model/wdm-olt-net-device.h',
+        'model/wdm-onu-net-device.h',
+        'model/wdm-oxc-net-device.h',
+        'model/wdm-phy.h',
+        'model/wdm-splitter-net-device.h',
+        'model/wdm-pon-splitter-net-device.h',
+        'model/wdm-passthrough-net-device.h',
+        'model/wdm-unidirectional-channel.h',
+        'helper/optics-helper.h',
+        ]
+
+    if bld.env.ENABLE_EXAMPLES:
+        bld.add_subdirs('examples')
+
+    # bld.ns3_python_bindings()
+

@@ -1,0 +1,59 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+# def options(opt):
+#     pass
+
+# def configure(conf):
+#     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
+
+def build(bld):
+    module = bld.create_ns3_module('load-flow', ['core'])
+    module.source = [
+        'helper/load-flow-helper.cc',
+        'model/admitt.cc',
+        'model/edge-bus.cc',
+        'model/bus.cc',
+        'model/graph.cc',
+        'model/loss.cc',
+        'model/quantity.cc',
+        'model/report.cc',
+        'model/utils.cc',
+        'model/load-flow.cc',
+        'model/solve.cc',
+        ]
+
+    module_test = bld.create_ns3_module_test_library('load-flow')
+    module_test.source = [
+        'test/load-flow-test-suite.cc',
+        ]
+
+    headers = bld.new_task_gen(features=['ns3header'])
+    headers.module = 'load-flow'
+    headers.source = [
+        'model/define.h',
+        'model/admitt.h',
+        'helper/load-flow-helper.h',
+        'model/edge-bus.h',
+        'model/bus.h',
+        'model/graph.h',
+        'model/loss.h',
+        'model/quantity.h',
+        'model/report.h',
+        'model/utils.h', 
+        'model/load-flow.h',
+        'model/solve.h',         
+        ]
+
+    if bld.env.ENABLE_EXAMPLES:
+        bld.add_subdirs('examples')    
+    
+    #if(bld.env['ENABLE_REGEX']):
+        #module.use.extend(['REGEX'])
+        #module_test.use.extend(['REGEX'])
+    
+    if bld.env['ENABLE_LAPACK']:
+        module.use.extend(['LAPACK', 'BLAS'])
+        module_test.use.extend(['LAPACK', 'BLAS'])
+        
+    # bld.ns3_python_bindings()
+

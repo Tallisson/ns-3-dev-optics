@@ -1,0 +1,130 @@
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+#include "wrapper.h"
+
+#include "ns3/log.h"
+#include "ns3/uinteger.h"
+#include "ns3/double.h"
+
+using namespace std;
+
+namespace ns3
+{
+
+NS_LOG_COMPONENT_DEFINE ("WrapperNs3Jade");
+NS_OBJECT_ENSURE_REGISTERED (Wrapper);
+
+TypeId
+Wrapper::GetTypeId (void)
+{
+  static TypeId tid = TypeId ("ns3::Wrapper")
+    .SetParent<Object> ()
+    .AddConstructor<Wrapper> ();
+
+  return tid;
+}
+
+Wrapper::Wrapper()
+  : is_operate(false)
+{
+}
+
+Wrapper::~Wrapper() {
+  NS_LOG_FUNCTION_NOARGS ();
+  Clear();
+}
+
+void
+Wrapper::Initialize(string classpath, string library_path, string main_class) {
+    classpath = string(CLASS).append(classpath);
+    library_path = string(LIBRARY).append(library_path);
+
+    if(is_operate == false)
+    {
+      is_operate = true;
+    } else {
+      Clear();
+    }
+
+    options = new JavaVMOption[3];
+    options[0].optionString = const_cast<char*>(D_JIT);           /* disable JIT */
+    options[1].optionString = const_cast<char*>(classpath.c_str()); /* user classes */
+    options[2].optionString = const_cast<char*>(library_path.c_str());  /* set native library path */
+
+    vm_args.version = JNI_VERSION_1_6;
+    vm_args.nOptions = 3;
+    vm_args.options = options;
+    vm_args.ignoreUnrecognized = JNI_FALSE;
+    /* load and initialize a Java VM, return a JNI interface
+     * pointer in env */
+    jint res = JNI_CreateJavaVM(&jvm, reinterpret_cast<void**>(&env), &vm_args);
+    if(res < 0) {
+        cerr << "Failed to create the JVM\n" << endl;
+    }
+
+    cls = env->FindClass(main_class.c_str());
+    if(!cls) {
+        cerr << "Failed to find class " << main_class << endl;
+    }
+
+    jmethodID mid = env->GetMethodID(cls, "<init>", "()V");
+    if(!mid) {
+        cerr << "Failed to find method 'init'" << endl;
+    }
+
+    run = env->NewObject(cls,mid);
+    if(!run) {
+        cerr << "Failed to create object 'Run'" << endl;
+    }
+}
+
+void
+Wrapper::CreateAgent(const char * netI) {
+    jmethodID mid = env->GetMethodID(cls, "createAgent", "(Ljava/lang/String;)V");
+    if(!mid) {
+        cerr << "Failed to find method 'create'" << endl;
+    }
+
+    jstring net = env->NewStringUTF(netI);
+    env->CallVoidMethod(run, mid, net);
+}
+
+double
+Wrapper::CaptureData(const char * netI) {
+    jmethodID mid = env->GetMethodID(cls, "captureData", "(Ljava/lang/String;)D");
+    if(!mid) {
+        cerr << "Failed to find method 'captureData'" << endl;
+    }
+    jstring net = env->NewStringUTF(netI);
+    double data = env->CallDoubleMethod(run, mid, net);
+
+    return data;
+}
+
+void
+Wrapper::CreateAgent(const char* netI, int type, vector<double> vars)
+{
+  jmethodID mid = env->GetMethodID(cls, "createAgent", "(Ljava/lang/String;I;D;D;D;D;)V");
+  if(!mid) {
+      cerr << "Failed to find method 'create'" << endl;
+  }
+
+  jstring net = env->NewStringUTF(netI);
+  if(vars.size() == 4)
+  {
+    env->CallVoidMethod(run, mid, net, vars.at(0), vars.at(1), vars.at(2), vars.at(3));
+  } else
+  {
+    cerr << "Failed to execute method 'create'" << endl;
+  }
+}
+
+void
+Wrapper::Clear()
+{
+  delete[] options;
+  env->DeleteLocalRef(run);
+  jvm->DestroyJavaVM();
+}
+
+}
+
