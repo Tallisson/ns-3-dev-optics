@@ -1,38 +1,43 @@
-#include <iostream>
 #include "bus.h"
+#include <iostream>
 #include <stdio.h>
 
 #include "ns3/log.h"
 #include "ns3/uinteger.h"
 #include "ns3/double.h"
+#include "ns3/boolean.h"
 
 using namespace std;
 
 namespace ns3
 {
 
-NS_LOG_COMPONENT_DEFINE ("EdgeBus");
+NS_LOG_COMPONENT_DEFINE ("Bus");
 NS_OBJECT_ENSURE_REGISTERED (Bus);
 
-void
-Bus::Init(container::vector<string> data)
+void Bus::Init(container::vector<string> data)
 {
   id = atoi(data.at(0).c_str());
   type = atoi(data.at(1).c_str());
   actual_voltage = voltage = atof(data.at(2).c_str());
-  actual_angle = angle = (atof(data.at(3).c_str()) * M_PI / 180);
+  actual_angle = (atof(data.at(3).c_str()) * M_PI / 180);
   aPowerL = atof(data.at(4).c_str());
   rPowerL = atof(data.at(5).c_str());
   aPowerG =  atof(data.at(6).c_str());
   rPowerG = atof(data.at(7).c_str());
   bSh = atof(data.at(8).c_str());
 
+  if(type == SLACK)
+  {
+    angle = actual_angle;
+  }
+
   erroQ = 0;
   erroP = 0;
 
   aPower = aPowerG - aPowerL;
   rPower = rPowerG - rPowerL;
-}
+};
 
 TypeId
 Bus::GetTypeId (void)
@@ -124,9 +129,8 @@ Bus::Bus()
 }
 
 Bus::~Bus() {
-  neighbors.clear();
   impd.clear();
-  NS_LOG_FUNCTION_NOARGS ();
+  neighbors.clear();
 }
 
 double Bus::GetAngle() {
@@ -135,6 +139,7 @@ double Bus::GetAngle() {
 
 double Bus::GetVoltage() {
   return voltage;
+
 }
 
 double Bus::GetAPower() {
@@ -174,11 +179,11 @@ void Bus::AddN(Ptr<Bus> n, Ptr<EdgeBus> i) {
   s += i->GetS() + i->GetSh();
 
   uint32_t id = n->GetId();
-  neighbors.insert(std::make_pair(id, n));
-  impd.insert(std::make_pair(id, i));
+  neighbors.insert(pair<uint32_t, Ptr<Bus> >(id, n));
+  impd.insert(pair<uint32_t, Ptr<EdgeBus> >(id, i));
 }
 
-Ptr<EdgeBus> Bus::HasN(int w) {
+Ptr<EdgeBus> Bus::HasN(uint32_t w) {
   Ptr<Bus> bW = neighbors.at(w);
   if(bW != NULL) {
     Ptr<EdgeBus> imp = impd.at(w);
@@ -236,7 +241,7 @@ void Bus::SetRPowerL(double rPowerL) {
   this->rPowerL = rPowerL;
 }
 
-void Bus::SetEst(int variable, double value) {
+void Bus::SetEst(uint32_t variable, double value) {
   switch(variable) {
   case A_POWER:
     this->erroP = value;
@@ -263,7 +268,7 @@ double Bus::GetRPowerL() {
   return this->rPowerL;
 }
 
-double Bus::GetEst(int variable) {
+double Bus::GetEst(uint32_t variable) {
   switch(variable) {
   case VOLTAGE:
   case A_POWER:
@@ -295,4 +300,16 @@ double Bus::GetActualVoltage()
 {
   return actual_voltage;
 }
+
+/*void Bus::Clear()
+{
+  neighbors.clear();
+  container::map<uint32_t, Ptr<EdgeBus> >::iterator it;
+  for(it = impd.begin(); it != impd.end(); it++)
+  {
+    it->second->Unref();
+  }
+  impd.clear();
+}*/
+
 }

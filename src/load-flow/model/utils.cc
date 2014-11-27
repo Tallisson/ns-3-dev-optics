@@ -1,37 +1,11 @@
 #include "utils.h"
-
-#include "ns3/log.h"
+#include <iostream>
 
 using namespace boost;
+using namespace std;
 
 namespace ns3
 {
-NS_LOG_COMPONENT_DEFINE ("Utils");
-NS_OBJECT_ENSURE_REGISTERED (Utils);
-
-Ptr<Utils> Utils::instance = NULL;
-
-
-TypeId
-Utils::GetTypeId (void)
-{
-  static TypeId tid = TypeId ("ns3::EdgeBus")
-    .SetParent<Object> ();
-
-  return tid;
-}
-
-Ptr<Utils> Utils::GetInstance() {
-  if(!instance) {
-    instance = CreateObject<Utils>();
-  }
-
-  return instance;
-}
-
-void Utils::Delete() {
-  NS_LOG_FUNCTION_NOARGS ();
-}
 
 Desc* Utils::ProcessFile(const char* filename) {
   Desc* d = new Desc();
@@ -43,7 +17,7 @@ Desc* Utils::ProcessFile(const char* filename) {
 
   for(std::string str; std::getline(in, str); )
   {
-      if((qtd_bus == 0 && qtd_branch == 0) && this->ValidateInfSystem(str)) {
+      if((qtd_bus == 0 && qtd_branch == 0) && ValidateInfSystem(str)) {
         container::vector<std::string> strs;
         split(strs, str, is_any_of("\t "));
         if(strs.size() == 3) {
@@ -57,14 +31,14 @@ Desc* Utils::ProcessFile(const char* filename) {
         split(strs, str, is_any_of("\t "));
         unsigned size = strs.size();
         if(size == 9) {
-          Ptr<Bus> b = CreateObject<Bus> ();
+          Ptr<Bus> b = CreateObject<Bus>();
           b->Init(strs);
           d->bars.push_back(b);
         }
         qtd_bus--;
       }
 
-      if((qtd_bus == 0 && qtd_branch == 0) && this->ValidateBusData(str)) {
+      if((qtd_bus == 0 && qtd_branch == 0) && ValidateBusData(str)) {
         container::vector<std::string> strs;
         split(strs, str, is_any_of("\t "));
         if(strs.size() == 3) {
@@ -84,7 +58,7 @@ Desc* Utils::ProcessFile(const char* filename) {
         qtd_branch--;
       }
 
-      if((qtd_bus == 0 && qtd_branch == 0) && this->ValidateBranchData(str)) {
+      if((qtd_bus == 0 && qtd_branch == 0) && ValidateBranchData(str)) {
         container::vector<std::string> strs;
         split(strs, str, is_any_of("\t "));
         if(strs.size() == 3) {

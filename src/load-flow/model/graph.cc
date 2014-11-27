@@ -5,6 +5,7 @@
 
 #include "ns3/log.h"
 #include "ns3/uinteger.h"
+#include "ns3/double.h"
 #include "ns3/boolean.h"
 
 namespace ns3
@@ -39,22 +40,22 @@ Graph::GetTypeId (void)
 }
 
 Graph::Graph():
-    numV(0),
-    numE(0),
-    simetric(true)
+numV(0), numE(0), simetric(true)
 {
 }
 
 Graph::~Graph() {
-  Ptr<Bus> b;
-  for(container::map<uint32_t, Ptr<Bus> >::iterator it = bars.begin(); it != bars.end(); it++) {
-    b = it->second;
-    b->Clear();
+  container::map<uint32_t, Ptr<Bus> >::iterator it;
+  for(it = bars.begin(); it != bars.end(); it++)
+  {
+    Ptr<Bus> bus = it->second;
+    bus->Clear();
   }
+
   bars.clear();
 }
 
-void Graph::AddEdge(Ptr<Bus> v, Ptr<Bus> w, Ptr<EdgeBus> impd) {
+void Graph::AddEdge(Ptr<Bus>  v, Ptr<Bus>  w, Ptr<EdgeBus>  impd) {
   uint32_t idV = v->GetId();
   uint32_t idW = w->GetId();
 
@@ -69,9 +70,9 @@ void Graph::AddEdge(Ptr<Bus> v, Ptr<Bus> w, Ptr<EdgeBus> impd) {
   }
 }
 
-void Graph::Assoc(Ptr<Bus> v, Ptr<Bus> w, Ptr<EdgeBus> impd) {
+void Graph::Assoc(Ptr<Bus>  v, Ptr<Bus>  w, Ptr<EdgeBus>  impd) {
   uint32_t idV = v->GetId();
-  Ptr<Bus> tmp = bars.at(idV);
+  Ptr<Bus>  tmp = bars.at(idV);
 
   if(tmp != NULL) {
     tmp->AddN(w, impd);
@@ -79,7 +80,7 @@ void Graph::Assoc(Ptr<Bus> v, Ptr<Bus> w, Ptr<EdgeBus> impd) {
 }
 
 bool Graph::HasEdge(uint32_t v, uint32_t w) {
-  Ptr<Bus> bV = bars.at(v);
+  Ptr<Bus>  bV = bars.at(v);
   if(bV != NULL) {
     if(bV->HasN(w) != NULL) {
       return true;
@@ -89,9 +90,9 @@ bool Graph::HasEdge(uint32_t v, uint32_t w) {
   return false;
 }
 
-Ptr<EdgeBus> Graph::GetEdge(uint32_t v, uint32_t w) {
-  Ptr<Bus> bV;
-  Ptr<EdgeBus> edge;
+Ptr<EdgeBus>  Graph::GetEdge(uint32_t v, uint32_t w) {
+  Ptr<Bus>  bV;
+  Ptr<EdgeBus>  edge;
 
   bV = bars.at(v);
   if(bV != NULL) {
@@ -106,19 +107,20 @@ void Graph::SetSimetric(bool simetric) {
   this->simetric = simetric;
 }
 
-void Graph::AddV(Ptr<Bus> v) {
+void Graph::AddV(Ptr<Bus>  v) {
   uint32_t idV = v->GetId();
   bars.insert(make_pair(idV, v));
+  cout << "118 - graph" << endl;
   numV++;
 }
 
-Ptr<Bus> Graph::at(uint32_t v) {
-  Ptr<Bus> bV = bars.at(v);
+Ptr<Bus>  Graph::at(uint32_t v) {
+  Ptr<Bus>  bV = bars.at(v);
 
   return bV;
 }
 
-Ptr<EdgeBus> Graph::AddEdge(Ptr<Bus> v, Ptr<Bus> w, Ptr<Admitt> admitt) {
+Ptr<EdgeBus>  Graph::AddEdge(Ptr<Bus>  v, Ptr<Bus>  w, Ptr<Admitt>  admitt) {
   double r = admitt->GetR();
   double x = admitt->GetX();
   double sh = (admitt->GetSh() ? admitt->GetSh() : 0);
@@ -126,13 +128,13 @@ Ptr<EdgeBus> Graph::AddEdge(Ptr<Bus> v, Ptr<Bus> w, Ptr<Admitt> admitt) {
   double c = r / (pow(r, 2) + pow(x, 2));
   double s = -x / (pow(r, 2) + pow(x, 2));
 
-  Ptr<EdgeBus> node = CreateObject<EdgeBus>();
-  //c, s, sh, admitt->GetTap(), admitt->GetAngle(), admitt->GetFrom(), admitt->GetTo())
-  node->Init(c, s, sh, admitt->GetTap(), admitt->GetType(), admitt->GetAngle(), admitt->GetMinLim(), admitt->GetMaxLim(),
-             admitt->GetFrom(), admitt->GetTo(), admitt->GetBar());
+  Ptr<EdgeBus>  node = CreateObject<EdgeBus>();
+  node->Init(c, s, sh, admitt->GetTap(), admitt->GetAngle(), admitt->GetType(),
+                         admitt->GetMinLim(), admitt->GetMaxLim(),
+                         admitt->GetFrom(), admitt->GetTo(), admitt->GetCrtBar());
 
   AddEdge(v, w, node);
-
+  admitt = NULL;
   return node;
 }
 

@@ -15,23 +15,24 @@ using namespace boost;
 namespace ns3
 {
 
-class Report: public Object {
+class Report : public Object {
 private:
-  container::map<Ptr<Bus>, Ptr<Quantity> > power;
-  container::map<Ptr<EdgeBus>, Ptr<Loss> > losses;
+  container::map<Ptr<Bus> , Ptr<Quantity> > power;
+  container::map<Ptr<EdgeBus> , Ptr<Loss> > losses;
 public:
-  void Insert(Ptr<Bus> bar, Ptr<Quantity>  q);
-  void Insert(Ptr<EdgeBus> n, Ptr<Loss>  l);
+  void Insert(Ptr<Bus>  bar, Ptr<Quantity>  q);
+  void Insert(Ptr<EdgeBus>  n, Ptr<Loss>  l);
+  Ptr<Quantity>  At(Ptr<Bus>  bar);
+  Ptr<Loss>  At(Ptr<EdgeBus>  n);
+  container::map<Ptr<Bus> , Ptr<Quantity> > GetPower();
+  container::map<Ptr<EdgeBus> , Ptr<Loss> > GetLosses();
+
   void Clear();
 
-  Ptr<Quantity>  At(Ptr<Bus> bar);
-  Ptr<Loss>  At(Ptr<EdgeBus> n);
-  container::map<Ptr<Bus>, Ptr<Quantity> > GetPower();
-  container::map<Ptr<EdgeBus>, Ptr<Loss> > GetLosses();
-
-  static TypeId GetTypeId (void);
   Report();
   virtual ~Report();
+
+  static TypeId GetTypeId (void);
 };
 }
 

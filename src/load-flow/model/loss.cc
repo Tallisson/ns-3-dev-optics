@@ -10,56 +10,50 @@ namespace ns3
 NS_LOG_COMPONENT_DEFINE ("Loss");
 NS_OBJECT_ENSURE_REGISTERED (Loss);
 
-Loss::Loss():
-    p_in_branch (0),
-    p_out_branch (0),
-    q_in_branch (0),
-    q_out_branch (0),
-    loss (0)
-{
-  NS_LOG_FUNCTION_NOARGS ();
-}
-
-Loss::~Loss() {
-}
-
 TypeId
 Loss::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::Loss")
     .SetParent<Object> ()
     .AddConstructor<Loss> ()
-    .AddAttribute ("PowerActiveBranch",
+    /*.AddAttribute ("PowerActiveBranch",
                    "Power Active Branch Value",
-                   DoubleValue (0), /* TODO */
+                   DoubleValue (0),  TODO
                    MakeDoubleAccessor (&Loss::p_in_branch),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("PowerActiveBranchOut",
                    "Power Active Branch Out Value",
-                   DoubleValue (0), /* TODO */
+                   DoubleValue (0),  TODO
                    MakeDoubleAccessor (&Loss::p_out_branch),
                    MakeDoubleChecker<double> ())
      .AddAttribute ("PowerReactiveBranch",
                     "Power Reactive Branch Value",
-                    DoubleValue (0), /* TODO */
+                    DoubleValue (0),  TODO
                     MakeDoubleAccessor (&Loss::q_in_branch),
                     MakeDoubleChecker<double> ())
      .AddAttribute ("PowerReactiveBranchOut",
                     "Power Reactive Branch Out Value",
-                    DoubleValue (0), /* TODO */
+                    DoubleValue (0),  TODO
                     MakeDoubleAccessor (&Loss::q_out_branch),
                     MakeDoubleChecker<double> ())
       .AddAttribute ("LossPower",
                      "Losses Power",
-                     DoubleValue (0), /* TODO */
+                     DoubleValue (0),  TODO
                      MakeDoubleAccessor (&Loss::loss),
                      MakeDoubleChecker<double> ())
-  ;
+*/  ;
 
   return tid;
 }
 
-void Loss::SetAttr(int attr, double value) {
+
+Loss::Loss() {
+}
+
+Loss::~Loss() {
+}
+
+void Loss::SetAttr(uint32_t attr, double value) {
   switch(attr) {
   case P_IN:
     this->p_in_branch = value;
@@ -78,7 +72,7 @@ void Loss::SetAttr(int attr, double value) {
   }
 }
 
-double Loss::GetAttr(int attr) {
+double Loss::GetAttr(uint32_t attr) {
   switch(attr) {
   case P_IN:
     return this->p_in_branch;

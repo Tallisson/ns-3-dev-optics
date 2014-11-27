@@ -7,13 +7,13 @@
 namespace ns3
 {
 
-NS_LOG_COMPONENT_DEFINE ("EdgeBusLoad");
+NS_LOG_COMPONENT_DEFINE ("EdgeBus");
 NS_OBJECT_ENSURE_REGISTERED(EdgeBus);
 
 TypeId
 EdgeBus::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::EdgeBusLoad")
+  static TypeId tid = TypeId ("ns3::EdgeBus")
     .SetParent<Object> ()
     .AddConstructor<EdgeBus> ()
     .AddAttribute ("Conductance",
@@ -80,19 +80,8 @@ EdgeBus::GetTypeId (void)
   return tid;
 }
 
-EdgeBus::EdgeBus()
-{
-}
-
-EdgeBus::~EdgeBus()
-{
-  NS_LOG_FUNCTION_NOARGS ();
-}
-
-void EdgeBus::Init(double c, double s, double sh,
-                   double tap, uint32_t type, double angle_phi,
-                   double min_lim, double max_lim,
-                   uint32_t from, uint32_t to, uint32_t crt_bar)
+void EdgeBus::Init(double c, double s, double sh, double tap, uint32_t type,
+    double angle_phi, double min_lim, double max_lim, uint32_t from, uint32_t to, uint32_t crt_bar)
 {
   this->c = c;
   this->s = s;
@@ -100,22 +89,31 @@ void EdgeBus::Init(double c, double s, double sh,
   this->tap = tap;
   this->type = type;
   this->angle_phi = angle_phi;
-  this->crt_bar= crt_bar;
+  this->from = from;
+  this->to = to;
+  this->crt_bar = crt_bar;
+
   if(type == VARIABLE_TAP_MVAR || type == VARIABLE_TAP_VC)
   {
-    this->min_lim_tap = min_lim;
-    this->max_lim_tap = max_lim;
+    min_lim_tap = min_lim;
+    max_lim_tap = max_lim;
     min_lim_phi = max_lim_phi = 0;
   }
 
   if(type == VARIABLE_PHASE_ANGLE)
   {
-    this->min_lim_phi = min_lim;
-    this->max_lim_phi = max_lim;
     min_lim_tap = max_lim_tap = 0;
-  }
-  this->from = from;
-  this->to = to;
+    min_lim_phi = min_lim;
+    max_lim_phi = max_lim;
+    }
+}
+
+EdgeBus::EdgeBus()
+{
+}
+
+EdgeBus::~EdgeBus()
+{
 }
 
 double EdgeBus::GetC() {
@@ -222,21 +220,6 @@ uint32_t EdgeBus::GetFrom()
 uint32_t EdgeBus::GetTo()
 {
   return to;
-}
-
-void EdgeBus::SetFrom(uint32_t from)
-{
-  this->from = from;
-}
-
-void EdgeBus::SetTo(uint32_t to)
-{
-  this->to = to;
-}
-
-void EdgeBus::SetType(uint32_t type)
-{
-  this->type = type;
 }
 
 }

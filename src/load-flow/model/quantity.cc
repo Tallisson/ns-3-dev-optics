@@ -10,47 +10,45 @@ namespace ns3
 NS_LOG_COMPONENT_DEFINE ("Quantity");
 NS_OBJECT_ENSURE_REGISTERED (Quantity);
 
-Quantity::Quantity():
-    pg(0), pc(0), qg(0), qc(0)
-{
-}
-
-Quantity::~Quantity() {
-  NS_LOG_FUNCTION_NOARGS ();
-}
-
 TypeId
 Quantity::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::Quantity")
     .SetParent<Object> ()
     .AddConstructor<Quantity> ()
-    .AddAttribute ("PowerActiverG",
+    /*.AddAttribute ("PowerActiverG",
                    "Power Active Generation",
-                   DoubleValue (), /* TODO */
+                   DoubleValue (),  TODO
                    MakeDoubleAccessor (&Quantity::pg),
                    MakeDoubleChecker<double> ())
      .AddAttribute ("PowerActiverL",
                     "Power Active Waste",
-                    DoubleValue (), /* TODO */
+                    DoubleValue (),  TODO
                     MakeDoubleAccessor (&Quantity::pc),
                     MakeDoubleChecker<double> ())
       .AddAttribute ("PowerReactiverG",
                      "Power Reactive Generation",
-                     DoubleValue (), /* TODO */
+                     DoubleValue (),  TODO
                      MakeDoubleAccessor (&Quantity::qg),
                      MakeDoubleChecker<double> ())
       .AddAttribute ("PowerReactiverL",
                      "Power Reactive Waste",
-                     DoubleValue (), /* TODO */
+                     DoubleValue (),  TODO
                      MakeDoubleAccessor (&Quantity::qc),
                      MakeDoubleChecker<double> ())
-  ;
+*/  ;
 
   return tid;
 }
 
-void Quantity::SetAttr(int attr, double value) {
+
+Quantity::Quantity(): pg(0), pc(0), qg(0), qc(0) {
+}
+
+Quantity::~Quantity() {
+}
+
+void Quantity::SetAttr(uint32_t attr, double value) {
   switch(attr) {
   case PG:
     this->pg = value;
@@ -67,7 +65,7 @@ void Quantity::SetAttr(int attr, double value) {
   }
 }
 
-double Quantity::GetAttr(int attr) {
+double Quantity::GetAttr(uint32_t attr) {
   switch(attr) {
   case PG:
     return this->pg;

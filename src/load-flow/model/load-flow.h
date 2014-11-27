@@ -26,6 +26,11 @@ using namespace boost;
 namespace ns3
 {
 
+#define ANGLE_INIT 0
+#define VOLTAGE_INIT 1
+#define ERROR 0.0001
+#define S_BASE 100
+
 class LoadFlow: public Object {
 private:
   uint32_t numB;
@@ -40,13 +45,8 @@ private:
   uint32_t nTAP_PHASE;
 
   //mat jacobian;
-  Solve* jacobian;
-  Solve* y_bus;
-
-  /*vec estP;
-  vec estS;
-  vec diffP;
-  vec diffS;*/
+  Ptr<Solve> jacobian;
+  Ptr<Solve> y_bus;
 
   vec calcP;
   vec calcQ;
@@ -82,8 +82,6 @@ private:
   //void insertLoss(Node* edge, double vK, double vM, double theta);
   void insertLoss(Ptr<EdgeBus> edge, Ptr<Bus> barK, Ptr<Bus> barM);
 public:
-  /*LoadFlow(double error);
-  LoadFlow(double error, double sBase);*/
   LoadFlow();
   virtual ~LoadFlow();
 

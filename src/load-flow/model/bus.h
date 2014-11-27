@@ -1,13 +1,11 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-#ifndef BUS_H_
-#define BUS_H_
+#ifndef BAR_H_
+#define BAR_H_
 
 #include <boost/container/map.hpp>
 #include <boost/container/vector.hpp>
+#include "edge-bus.h"
 #include <string>
 #include <boost/cstdint.hpp>
-
-#include "edge-bus.h"
 
 #include "ns3/ptr.h"
 #include "ns3/type-id.h"
@@ -26,8 +24,9 @@ namespace ns3
 #define VOLTAGE 100
 #define A_POWER 200
 #define R_POWER 300
+#define ANGLE 400
 
-class Bus: public Object {
+class Bus : public Object {
 private:
   double angle;
   double voltage;
@@ -53,26 +52,13 @@ private:
 
 public:
   void Init(container::vector<string> data);
-
-  /*Bus(double angle, double voltage, double aPower, double rPower, int type, int id, double bSh) :
-      angle(angle), voltage(voltage), aPower(aPower), rPower(rPower), aPowerL(0), rPowerL(0), aPowerG(0), rPowerG(0), type(type), id(id),
-      bSh(bSh)
-  {};
-
-  Bus(double angle, double voltage, double aPowerL, double rPowerL, double aPowerG, double rPowerG, int type, int id, double bSh) :
-    angle(angle), voltage(voltage), aPowerL(aPowerL), rPowerL(rPowerL), aPowerG(aPowerG), rPowerG(rPowerG), type(type), id(id), c(0), s(0), bSh(bSh)
-  {
-    aPower = aPowerG - aPowerL;
-    rPower = rPowerG - rPowerL;
-  };*/
-
-  Bus ();
+  Bus();
   virtual ~Bus();
 
-  static TypeId GetTypeId (void);
-
   double GetAngle();
+  double GetActualAngle();
   double GetVoltage();
+  double GetActualVoltage();
   double GetAPower();
   double GetRPower();
   double GetAPowerG();
@@ -82,7 +68,7 @@ public:
   double GetC();
   double GetS();
   double GetBSh();
-  double GetEst(int variable);
+  double GetEst(uint32_t variable);
 
   uint32_t GetType();
   uint32_t GetId();
@@ -98,19 +84,16 @@ public:
   void SetC(double c);
   void SetS(double s);
   void SetBSh(double bSh);
-  void SetEst(int variable, double value);
-  void SetType(uint32_t type);
-  void SetId(uint32_t id);
+  void SetEst(uint32_t variable, double value);
 
-  void AddN(Ptr<Bus> n, Ptr<EdgeBus> i);
-  Ptr<EdgeBus> HasN(int w);
+  void AddN(Ptr<Bus>  n, Ptr<EdgeBus>  i);
+  Ptr<EdgeBus>  HasN(uint32_t w);
   container::map<uint32_t, Ptr<Bus> > GetNs();
   container::map<uint32_t, Ptr<EdgeBus> > GetWeight();
-  Ptr<EdgeBus> GetEdge(uint32_t n);
+  Ptr<EdgeBus>  GetEdge(uint32_t n);
   void Clear();
 
-  double GetActualAngle();
-  double GetActualVoltage();
+  static TypeId GetTypeId (void);
 };
 }
-#endif /* BUS_H_ */
+#endif /* BAR_H_ */

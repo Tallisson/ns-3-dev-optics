@@ -40,7 +40,7 @@ def build(bld):
         'model/quantity.h',
         'model/report.h',
         'model/utils.h', 
-        'model/load-flow.h',
+   	    'model/load-flow.h',
         'model/solve.h',         
         ]
 

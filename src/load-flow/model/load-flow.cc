@@ -106,20 +106,6 @@ LoadFlow::GetTypeId (void)
   return tid;
 }
 
-/*LoadFlow::LoadFlow(double error):
-    numB(0), nPV(0), nPQ(0), cont(0), nLT(0), nTAP_Fixed(0), nTap_VC(0), nTap_MVAR(0), nTAP_PHASE(0),
-    error(error), sBase(S_BASE), use_base(true), verbose(true), s_alpha(1)
-{
-  bars = CreateObject<Graph>();
-  report = CreateObject<Report>();
-}
-
-LoadFlow::LoadFlow(double error, double sBase):
-    numB(0), nPV(0), nPQ(0), cont(0), error(error), sBase(sBase), use_base(true), verbose(true), s_alpha(1)
-{
-  bars = CreateObject<Graph>();
-}*/
-
 LoadFlow::LoadFlow():
     numB(0), nPV(0), nPQ(0),
     cont(0), nLT(0), nTAP_Fixed(0),
@@ -131,10 +117,6 @@ LoadFlow::LoadFlow():
 }
 
 LoadFlow::~LoadFlow() {
-  bars->Dispose();
-  report->Dispose();
-  delete description;
-
   NS_LOG_FUNCTION_NOARGS ();
 }
 
@@ -303,32 +285,36 @@ void LoadFlow::InitState(double aInitial, double vInitial) {
 }
 
 void LoadFlow::Configure() {
-  int s = nPV + (nPQ << 1);
+  uint32_t s = nPV + (nPQ << 1);
 
-  jacobian = new Solve();
-  jacobian->Initialize(s, s, TYPE_DOUBLE);
-  y_bus = new Solve();
-  y_bus->Initialize(numB, numB, TYPE_COMPLEX);
+  //jacobian = zeros<mat>(s, s);
+  jacobian = CreateObject<Solve>();
+  jacobian->Initialize(s, s);
+  calcP = zeros<vec>(s);
+  calcQ = zeros<vec>(s);
+  errorP = zeros<vec>(s);
+  errorQ = zeros<vec>(s);
+
+  y_bus = CreateObject<Solve>();
+  y_bus->Initialize(numB, numB);
   y_bus->Zeros();
 
   for(uint32_t j = 0; j < numB; j++) {
     Ptr<Bus> bus = bars->at(j+1);
-    cx_double value(bus->GetC(), abs(bus->GetS()));
+    double value = bus->GetS();
 
     y_bus->SetValue(j, j, value);
     container::map<uint32_t, Ptr<EdgeBus> > neighbors = bus->GetWeight();
     for (container::map<uint32_t, Ptr<EdgeBus> >::iterator it=neighbors.begin(); it!=neighbors.end(); ++it) {
       Ptr<EdgeBus> n = it->second;
       int index_n = (it->first-1);
-      cx_double value(n->GetC(), n->GetS());
+      double value = n->GetS();
       y_bus->SetValue(j, index_n, value);
     }
   }
 
-  calcP.zeros(s);
-  calcQ.zeros(s);
-  errorP.zeros(s);
-  errorQ.zeros(s);
+
+  InitState();
 }
 
 void LoadFlow::Configure(const char* file) {
@@ -342,13 +328,12 @@ void LoadFlow::Configure(const char* file) {
   nTap_MVAR = 0;
   nTAP_PHASE = 0;
 
-  Ptr<Utils> ut = Utils::GetInstance();
-  description = ut->ProcessFile(file);
-  ut->Delete();
+  description = Utils::ProcessFile(file);
 
   (description->s_base > 0) ? this->sBase = description->s_base : 0;
 
   for(unsigned i = 0; i < description->bars.size(); i++) {
+
     AddBar(description->bars.at(i));
   }
 
@@ -359,12 +344,11 @@ void LoadFlow::Configure(const char* file) {
   delete description;
 
   this->Configure();
-  InitState();
 }
 
 void LoadFlow::initJ() {
-  /*uint32_t s = nPV + (nPQ << 1);
-  jacobian = zeros<mat>(s, s);*/
+  //uint32_t s = nPV + (nPQ << 1);
+  //jacobian = zeros<mat>(s, s);
   jacobian->Zeros();
 }
 
@@ -466,6 +450,7 @@ void LoadFlow::mismatches() {
 
 void LoadFlow::solveSys() {
   //mat m = inv(jacobian);
+  //errorQ = m*-errorP;
   errorQ = jacobian->Product(errorP);
 }
 
@@ -805,6 +790,7 @@ uint32_t LoadFlow::Execute() {
     cout << os.str();
   }
 
+
   return counter;
 }
 
@@ -1087,14 +1073,14 @@ double LoadFlow::GetTotalLoss()
   return total_loss;
 }
 
-void LoadFlow::ResetReport()
-{
-  report->Clear();
-}
-
 void LoadFlow::Clear()
 {
   InitState();
+}
+
+void LoadFlow::ResetReport()
+{
+  report->Clear();
 }
 
 }

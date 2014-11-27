@@ -7,7 +7,7 @@
 namespace ns3
 {
 
-NS_LOG_COMPONENT_DEFINE ("Admittance");
+NS_LOG_COMPONENT_DEFINE ("Admitt");
 NS_OBJECT_ENSURE_REGISTERED (Admitt);
 
 TypeId
@@ -70,23 +70,24 @@ Admitt::GetTypeId (void)
   return tid;
 }
 
-Admitt::Admitt() :
-  from(0), to(0), r(r),
-  x(x), sh(sh), tap(tap),
-  angle_phi(angle_phi), type(TRANSMISSION_LINE),
-  min_lim(0), max_lim(0)
+Admitt::Admitt()
+  : from(0), to(0), r(0),
+    x(0), sh(0), tap(0),
+    angle_phi(angle_phi), type(TRANSMISSION_LINE),
+    min_lim(0), max_lim(0), crt_bar(0)
 {
-};
 
-Admitt::~Admitt ()
-{
-  NS_LOG_FUNCTION_NOARGS ();
 }
 
-void Admitt::Init (container::vector<string> data) {
-  from = (atoi(data.at(1).c_str()));
-  to = (atoi(data.at(0).c_str()));
-  r = atof(data.at(2).c_str());
+Admitt::~Admitt()
+{
+}
+
+void Admitt::Init(container::vector<string> data)
+{
+  from = (atof(data.at(0).c_str()));
+  to = (atof(data.at(1).c_str()));
+  r = (atof(data.at(2).c_str()));
   x = (atof(data.at(3).c_str()));
   sh = (atof(data.at(4).c_str()) / 2);
   tap = (atof(data.at(5).c_str()));
@@ -96,8 +97,6 @@ void Admitt::Init (container::vector<string> data) {
   max_lim = (atof(data.at(9).c_str()));
   crt_bar = (atoi(data.at(10).c_str()));
 };
-
-
 
 void Admitt::SetR(double r) {
   this->r = r;
@@ -171,17 +170,7 @@ double Admitt::GetMinLim() {
   return min_lim;
 }
 
-void Admitt::SetFrom (uint32_t from) {
-  this->from = from;
-}
-
-void Admitt::SetTo (uint32_t to) {
-  this->to = to;
-}
-
-uint32_t Admitt::GetBar()
-{
+uint32_t Admitt::GetCrtBar() {
   return crt_bar;
 }
-
 }

@@ -1,10 +1,3 @@
-/*
- * quantity.h
- *
- *  Created on: 09/08/2014
- *      Author: thiago
- */
-
 #ifndef QUANTITY_H_
 #define QUANTITY_H_
 
@@ -20,20 +13,19 @@ namespace ns3
 #define QG 20
 #define QC 25
 
-class Quantity: public Object {
+class Quantity : public Object {
 private:
   double pg;
   double pc;
   double qg;
   double qc;
 public:
-  void SetAttr(int attr, double value);
-  double GetAttr(int attr);
-
-  static TypeId GetTypeId (void);
-
+  void SetAttr(uint32_t attr, double value);
+  double GetAttr(uint32_t attr);
   Quantity();
   virtual ~Quantity();
+
+  static TypeId GetTypeId (void);
 };
 }
 

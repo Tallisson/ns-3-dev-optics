@@ -28,107 +28,60 @@ Solve::GetTypeId (void)
                    UintegerValue (),
                    MakeUintegerAccessor (&Solve::cols),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("Type",
-                   "Data type",
-                   UintegerValue (),
-                   MakeUintegerAccessor (&Solve::type),
-                   MakeUintegerChecker<uint32_t> ())    
   ;
 
   return tid;
 }
 
-Solve::Solve()
+void
+Solve::Initialize(uint32_t rows, uint32_t cols)
+{
+  this->rows = rows;
+  this->cols = cols;
+  data = new mat(rows, cols);
+}
+
+Solve::Solve():
+  rows(0), cols(0)
 {
 }
 
 Solve::~Solve()
 {
-}
-
-void 
-Solve::Initialize(uint32_t rows, uint32_t cols, uint32_t type)  
-{
-  this->rows = rows;
-  this->cols = cols;
-  this->type = type;
-
-  if(type == TYPE_DOUBLE)
-  {
-    data = new mat(cols, rows);
-    cx_data = NULL;
-  } else if(type == TYPE_COMPLEX)
-  {
-    data = NULL;
-    cx_data = new cx_mat(cols, rows);
-  }
+  data->reset();
+  delete data;
 }
 
 void Solve::FillR()
 {
-  if(type == TYPE_DOUBLE)
-  {
-    data->randu(data->n_rows, data->n_rows);
-  } else if(type == TYPE_COMPLEX)
-  {
-    cx_data->randu(data->n_rows, data->n_rows);
-  }
+  data->randu(data->n_rows, data->n_rows);
+  cout << *(data) << endl;
 }
 
-void Solve::SetValue(int row, int col, double value)
+void Solve::SetValue(uint32_t row, uint32_t col, double value)
 {
   (data->at(row, col)) = value;
 }
 
-void Solve::SetValue(int row, int col, cx_double value)
-{
-  (cx_data->at(row, col)) = value;
-}
-
-
 void Solve::Zeros()
 {
-  if(type == TYPE_DOUBLE)
-  {
-    data->zeros(rows, cols);
-  } else if(type == TYPE_COMPLEX)
-  {
-    cx_data->zeros(rows, cols);
-  }
+  data->zeros(rows, cols);
 }
 
 void Solve::Clear()
 {
-  if(type == TYPE_DOUBLE)
-  {
-    data->reset();
-    delete data;
-  } else if(type == TYPE_COMPLEX)
-  {
-    cx_data->reset();
-    delete cx_data;
-  }
+  data->reset();
+  delete data;
 }
 
 void Solve::Print()
 {
-  if(type == TYPE_DOUBLE)
-  {
-    cout << *(data) << endl;
-  } else if(type == TYPE_COMPLEX)
-  {
-    cout << *(cx_data) << endl;
-  }
+  cout << *(data) << endl;
 }
 
-double Solve::GetValue(int row, int col)
+double Solve::GetValue(uint32_t row, uint32_t col)
 {
   return data->at(row, col);
-}
-
-cx_double Solve::GetCxValue(int col, int row)
-{
-  return cx_data->at(row, col);
 }
 
 mat Solve::Product(vec error)
@@ -138,21 +91,9 @@ mat Solve::Product(vec error)
   return m;
 }
 
-cx_mat Solve::ProductCx(vec error)
-{
-  cx_mat m = cx_mat(((inv(*cx_data)) * -error));
-
-  return m;
-}
-
 mat Solve::Inverse()
 {
   return inv(*(data));
-}
-
-cx_mat Solve::InverseCx()
-{
-  return inv(*(cx_data));
 }
 
 uint32_t
@@ -173,15 +114,6 @@ Solve::GetRows() const {
 void
 Solve::SetRows(uint32_t rows) {
   this->rows = rows;
-}
-
-uint32_t
-Solve::GetType() const {
-  return type;
-}
-
-void Solve::SetType(uint32_t type) {
-  this->type = type;
 }
 
 }
