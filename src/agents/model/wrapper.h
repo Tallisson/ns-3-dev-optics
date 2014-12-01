@@ -26,6 +26,9 @@ namespace ns3
 #define CLASS "-Djava.class.path="
 #define LIBRARY "-Djava.library.path="
 
+#define ACTION_UP "Up"
+#define ACTION_DOWN "Down"
+
 #define SLACK 3
 #define GENERATION 2
 #define LOAD 0
@@ -34,8 +37,10 @@ class Wrapper: public Object {
 public:
     void Initialize(string classpath, string library_path, string main_class);
     void CreateAgent(const char* netI);
-    void CreateAgent(const char* netI, int type, vector<double> vars);
+    void CreateAgent(const char* netI, int type, double voltage, double phase, double active, double reactive);
+    vector<double> ExecuteControl(vector<string> nets, const char* action);
     double CaptureData(const char* netI);
+    void DeleteAgent(const char* netI);
 
     static TypeId GetTypeId (void);
 

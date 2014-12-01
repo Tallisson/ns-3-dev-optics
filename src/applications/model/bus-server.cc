@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- *  Copyright (c) 2007,2008,2009 INRIA, UDCAST
+ * Copyright (c) 2014 UFPI
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,8 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Amine Ismail <amine.ismail@sophia.inria.fr>
- *                      <amine.ismail@udcast.com>
+ * Author: Thiago Allisson R. da Silva <allissonribeiro02@gmail.com>
  */
 
 #include "ns3/log.h"
@@ -25,21 +24,29 @@
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
 #include "ns3/socket.h"
+#include "ns3/tcp-socket-factory.h"
 #include "ns3/simulator.h"
 #include "ns3/socket-factory.h"
+#include "seq-bus-header.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
 #include "ns3/boolean.h"
 #include "ns3/load-flow.h"
 #include "packet-loss-counter.h"
-#include "seq-bus-header.h"
+
 #include "bus-server.h"
 
 namespace ns3 {
 
+#define FILE_SIMULATION "/home/thiago/workspace/LoadFlow/examples/14-bus.txt"
+
+double diff_P[] = {0.10, 0.25, -0.10, -0.25};
+double diff_Q[] = {0.10, 0.25, -0.10, -0.25};
+int barras[] = {6};
+double diff_V[] = {0.10, 0.25, -0.10, -0.25, -0.5};
+
 NS_LOG_COMPONENT_DEFINE ("BusServer");
 NS_OBJECT_ENSURE_REGISTERED (BusServer);
-
 
 TypeId
 BusServer::GetTypeId (void)
@@ -58,21 +65,37 @@ BusServer::GetTypeId (void)
                    MakeUintegerAccessor (&BusServer::GetPacketWindowSize,
                                          &BusServer::SetPacketWindowSize),
                    MakeUintegerChecker<uint16_t> (8,256))
-     .AddAttribute ("IsCentralNode",
-                    "Flag to inform if node is or no central node",
-                    BooleanValue (false),
-                    MakeBooleanAccessor(&BusServer::GetIsCentralNode,
-                                       &BusServer::SetIsCentralNode),
-                    MakeBooleanChecker ())
+    .AddAttribute ("IsCentralNode",
+                   "Flag to inform if node is or no central node",
+                   BooleanValue (false),
+                   MakeBooleanAccessor(&BusServer::GetIsCentralNode,
+                                      &BusServer::SetIsCentralNode),
+                   MakeBooleanChecker ())
+    .AddAttribute ("CounterPackets",
+                   "Flag to inform if node is or no central node",
+                   UintegerValue (14),
+                   MakeUintegerAccessor (&BusServer::GetCount,
+                                         &BusServer::SetCount),
+                   MakeUintegerChecker<uint32_t> (1,256))
   ;
   return tid;
 }
 
 BusServer::BusServer ()
-  : m_lossCounter (0)
+  : m_sent (0),
+    m_lossCounter (0),
+    m_interval(Seconds (1.0))
 {
   NS_LOG_FUNCTION (this);
   m_received=0;
+  m_socket = 0;
+  m_socket6 = 0;
+  cont_p = 0;
+  cont_q = 0;
+  id_bus = 0;
+  cont_b = 0;
+  cont_v = 0;
+
 }
 
 BusServer::~BusServer ()
@@ -106,6 +129,31 @@ BusServer::GetReceived (void) const
 
 }
 
+bool
+BusServer::GetIsCentralNode (void) const
+{
+  return m_isCentralNode;
+}
+
+void
+BusServer::SetIsCentralNode (bool isCentralNode)
+{
+  m_isCentralNode = isCentralNode;
+}
+
+void
+BusServer::ServerHandleConnectionCreated (Ptr<Socket> s, const Address & addr)
+{
+  s->SetRecvCallback (MakeCallback (&BusServer::HandleRead, this));
+
+  uint32_t index = m_clients.size();
+  m_clients.insert (std::make_pair(index, addr));
+  socket_clients.insert (std::make_pair (addr, s));
+
+  Simulator::Schedule (m_interval, &BusServer::Send, this, index);
+  //s->SetSendCallback (MakeCallback (&TcpTestCase::ServerHandleSend, this));
+}
+
 void
 BusServer::DoDispose (void)
 {
@@ -120,25 +168,28 @@ BusServer::StartApplication (void)
 
   if (m_socket == 0)
     {
-      TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-      m_socket = Socket::CreateSocket (GetNode (), tid);
+      TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
+      m_socket = Socket::CreateSocket (GetNode (), TcpSocketFactory::GetTypeId());
       InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (),
                                                    m_port);
       m_socket->Bind (local);
+      m_socket->Listen ();
+      m_socket->SetAcceptCallback (MakeNullCallback<bool, Ptr< Socket >, const Address &> (),
+                                     MakeCallback (&BusServer::ServerHandleConnectionCreated, this));
     }
 
-  m_socket->SetRecvCallback (MakeCallback (&BusServer::HandleRead, this));
 
   if (m_socket6 == 0)
     {
-      TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
+      TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
       m_socket6 = Socket::CreateSocket (GetNode (), tid);
       Inet6SocketAddress local = Inet6SocketAddress (Ipv6Address::GetAny (),
                                                    m_port);
       m_socket6->Bind (local);
+      m_socket6->Listen ();
+      m_socket6->SetAcceptCallback (MakeNullCallback<bool, Ptr< Socket >, const Address &> (),
+          MakeCallback (&BusServer::ServerHandleConnectionCreated, this));
     }
-
-  m_socket6->SetRecvCallback (MakeCallback (&BusServer::HandleRead, this));
 
 }
 
@@ -151,6 +202,18 @@ BusServer::StopApplication ()
     {
       m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     }
+}
+
+void
+BusServer::SetCount (uint32_t count)
+{
+  m_count = count;
+}
+
+uint32_t
+BusServer::GetCount(void) const
+{
+  return m_count;
 }
 
 void
@@ -206,60 +269,6 @@ BusServer::HandleRead (Ptr<Socket> socket)
     }
 }
 
-
-/*void
-BusServer::HandleRead (Ptr<Socket> socket)
-{
-  NS_LOG_FUNCTION (this << socket);
-  Ptr<Packet> packet;
-  Address from;
-  while ((packet = socket->RecvFrom (from)))
-    {
-      if (packet->GetSize () > 0)
-        {
-          SeqTsHeader seqTs;
-          packet->RemoveHeader (seqTs);
-          uint32_t currentSequenceNumber = seqTs.GetSeq ();
-          if (InetSocketAddress::IsMatchingType (from))
-            {
-              NS_LOG_INFO ("TraceDelay: RX " << packet->GetSize () <<
-                           " bytes from "<< InetSocketAddress::ConvertFrom (from).GetIpv4 () <<
-                           " Sequence Number: " << currentSequenceNumber <<
-                           " Uid: " << packet->GetUid () <<
-                           " TXtime: " << seqTs.GetTs () <<
-                           " RXtime: " << Simulator::Now () <<
-                           " Delay: " << Simulator::Now () - seqTs.GetTs ());
-            }
-          else if (Inet6SocketAddress::IsMatchingType (from))
-            {
-              NS_LOG_INFO ("TraceDelay: RX " << packet->GetSize () <<
-                           " bytes from "<< Inet6SocketAddress::ConvertFrom (from).GetIpv6 () <<
-                           " Sequence Number: " << currentSequenceNumber <<
-                           " Uid: " << packet->GetUid () <<
-                           " TXtime: " << seqTs.GetTs () <<
-                           " RXtime: " << Simulator::Now () <<
-                           " Delay: " << Simulator::Now () - seqTs.GetTs ());
-            }
-
-          m_lossCounter.NotifyReceived (currentSequenceNumber);
-          m_received++;
-        }
-    }
-}*/
-
-void
-BusServer::ServerHandleConnectionCreated (Ptr<Socket> s, const Address & addr)
-{
-  s->SetRecvCallback (MakeCallback (&BusServer::HandleRead, this));
-
-  uint32_t index = m_clients.size();
-  m_clients.insert (std::make_pair(index, addr));
-  socket_clients.insert (std::make_pair (addr, s));
-
-  Simulator::Schedule (m_interval, &BusServer::Send, this, index);
-  //s->SetSendCallback (MakeCallback (&TcpTestCase::ServerHandleSend, this));
-}
-
 void
 BusServer::Send (uint32_t peer)
 {
@@ -268,10 +277,13 @@ BusServer::Send (uint32_t peer)
   seqTs.SetSeq (m_sent);
   Address m_peerAddress = m_clients.at(peer);
 
+  Ptr<LoadFlow> load_flow = CreateObject<LoadFlow>();
+  load_flow->SetVerbose (false);
+  load_flow->SetError (0.0001);
+  load_flow->Configure(FILE_SIMULATION);
   std::map<Address, uint32_t >::iterator it = m_index.find(m_peerAddress);
   if(it != m_index.end())
   {
-    Ptr<LoadFlow> load_flow = CreateObject<LoadFlow> ();
     uint32_t index = it->second;
 
     load_flow->Execute ();
@@ -282,6 +294,51 @@ BusServer::Send (uint32_t peer)
     seqTs.SetTheta(seqTs.DoubleToInt(load_flow->GetBar(index)->GetAngle()) );
     seqTs.SetLosses(seqTs.DoubleToInt(load_flow->GetTotalLoss()) );
 
+    /*if (cont_p < 4)
+    {
+      //Ptr<Bus> bus = load_flow->GetBar(index);
+      if(cont_p > 0) {
+        bus->SetAPower(bus->initial_apower);
+      }
+      bus->SetAPower(bus->GetAPower() + diff_P[cont_p]);
+      bus->SetAPowerG(bus->GetAPowerG() + diff_P[cont_p]);
+      cont_p++;
+    } else if (cont_q < 4)
+    {
+      //Ptr<Bus> bus = load_flow->GetBar(index);
+      if(cont_q > 0)
+      {
+        bus->SetRPower(bus->initial_rpower);
+      } else {
+        bus->SetAPower(bus->initial_apower);
+      }
+
+      bus->SetRPower(bus->GetRPower() + diff_Q[cont_q]);
+      bus->SetRPowerG(bus->GetRPowerG() + diff_Q[cont_q]);
+      cont_q++;
+    } else if (cont_v < 12)
+    {
+      if(cont_v > 0)
+      {
+        bus->SetVoltage(bus->initial_voltage);
+      } else
+      {
+        bus->SetRPower(bus->initial_rpower);
+      }
+
+      if (cont_b < 6)
+      {
+        bus = load_flow->GetBar(barras[id_bus]);
+        bus->SetVoltage(bus->GetVoltage() + diff_V[cont_b]);
+        cont_b++;
+      } else
+      {
+        id_bus++;
+        cont_b = 0;
+      }
+      cont_v++;
+    }*/
+    load_flow->Dispose();
     seqTs.SetIdNode (m_id);
   }
 
@@ -321,16 +378,10 @@ BusServer::Send (uint32_t peer)
     }
 }
 
-bool
-BusServer::GetIsCentralNode (void) const
-{
-  return m_isCentralNode;
-}
-
 void
-BusServer::SetIsCentralNode (bool isCentralNode)
+BusServer::SetId (uint32_t id)
 {
-  m_isCentralNode = isCentralNode;
+  m_id = id;
 }
 
-} // Namespace ns3
+}

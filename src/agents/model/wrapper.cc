@@ -29,8 +29,8 @@ Wrapper::Wrapper()
 }
 
 Wrapper::~Wrapper() {
-  NS_LOG_FUNCTION_NOARGS ();
   Clear();
+  NS_LOG_FUNCTION_NOARGS ();
 }
 
 void
@@ -101,21 +101,63 @@ Wrapper::CaptureData(const char * netI) {
 }
 
 void
-Wrapper::CreateAgent(const char* netI, int type, vector<double> vars)
+Wrapper::CreateAgent(const char* netI, int type, double voltage, double phase, double active, double reactive)
 {
-  jmethodID mid = env->GetMethodID(cls, "createAgent", "(Ljava/lang/String;I;D;D;D;D;)V");
+  jmethodID mid = env->GetMethodID(cls, "createAgent", "(Ljava/lang/String;IDDDD)V");
   if(!mid) {
       cerr << "Failed to find method 'create'" << endl;
   }
 
   jstring net = env->NewStringUTF(netI);
-  if(vars.size() == 4)
-  {
-    env->CallVoidMethod(run, mid, net, vars.at(0), vars.at(1), vars.at(2), vars.at(3));
-  } else
-  {
-    cerr << "Failed to execute method 'create'" << endl;
+
+  env->CallVoidMethod(run, mid, net, type, voltage, phase, active, reactive);
+
+}
+
+vector<double>
+Wrapper::ExecuteControl(vector<string> nets, const char* action)
+{
+  vector<double> updates;
+  jmethodID mid = env->GetMethodID(cls, "doAction", "([Ljava/lang/String;Ljava/lang/String;)[D");
+
+  if(!mid) {
+    cerr << "Failed to find method 'doAction'" << endl;
+  } else {
+    uint32_t size = nets.size();
+    jclass stringClass = env->FindClass("Ljava/lang/String;");
+    jobjectArray array = env->NewObjectArray(size, stringClass, NULL);
+
+    for(uint32_t i = 0; i < size; i++)
+    {
+      jstring str = env->NewStringUTF(nets.at(i).c_str());
+      env->SetObjectArrayElement(array, i, str);
+    }
+    jstring ac = env->NewStringUTF(action);
+
+    jdoubleArray retVal = (jdoubleArray) env->CallObjectMethod(run, mid, array, ac);
+    uint32_t count = env->GetArrayLength(retVal);
+    jdouble *element = env->GetDoubleArrayElements(retVal, 0);
+
+
+    for(uint32_t i = 0; i < count; i++)
+    {
+      updates.push_back(element[i]);
+    }
   }
+
+  return updates;
+}
+
+void
+Wrapper::DeleteAgent(const char* netI)
+{
+  jmethodID mid = env->GetMethodID(cls, "unrefAgent", "(Ljava/lang/String;)V");
+  if(!mid) {
+      cerr << "Failed to find method 'unrefAgent'" << endl;
+  }
+
+  jstring net = env->NewStringUTF(netI);
+  env->CallVoidMethod(run, mid, net);
 }
 
 void

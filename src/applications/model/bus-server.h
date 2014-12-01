@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2007,2008,2009 INRIA, UDCAST
+ * Copyright (c) 2014 UFPI
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,13 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Amine Ismail <amine.ismail@sophia.inria.fr>
- *                      <amine.ismail@udcast.com>
- *
+ * Author: Thiago Allisson Ribeiro da Silva <allissonribeiro02@gmail.com>
  */
 
-#ifndef BUS_SERVER_H
-#define BUS_SERVER_H
+#ifndef BUS_SERVER_H_
+#define BUS_SERVER_H_
 
 #include "ns3/application.h"
 #include "ns3/event-id.h"
@@ -34,8 +32,7 @@ using namespace std;
 
 namespace ns3 {
 
-class BusServer : public Application
-{
+class BusServer : public Application {
 public:
   static TypeId GetTypeId (void);
   BusServer ();
@@ -58,6 +55,16 @@ public:
   uint16_t GetPacketWindowSize () const;
 
   /**
+   * \return if node is central
+   */
+  bool GetIsCentralNode () const;
+
+  /**
+   * \return if node is central
+   */
+  uint32_t GetCount() const;
+
+  /**
    * \brief Set the size of the window used for checking loss. This value should
    *  be a multiple of 8
    * \param size the size of the window used for checking loss. This value should
@@ -65,12 +72,11 @@ public:
    */
   void SetPacketWindowSize (uint16_t size);
 
-  /**
-   * \return if node is central
-   */
-  bool GetIsCentralNode () const;
-
   void SetIsCentralNode (bool isCentralNode);
+
+  void SetCount(uint32_t count);
+
+  void SetId(uint32_t id);
 protected:
   virtual void DoDispose (void);
 
@@ -84,25 +90,29 @@ private:
   void Send (uint32_t peer);
 
   uint16_t m_port;
-  Ptr<Socket> m_socket;
-  Ptr<Socket> m_socket6;
   Address m_local;
   uint32_t m_received;
   uint32_t m_sent;
   uint32_t m_count;
+  Ptr<Socket> m_socket;
+  Ptr<Socket> m_socket6;
   PacketLossCounter m_lossCounter;
+  bool m_isCentralNode;
 
   map<uint32_t, Address> m_clients;
   map<Address, uint32_t> m_index;
   map<Address, Ptr<Socket> > socket_clients;
 
-  bool m_isCentralNode;
+  Time m_interval;
 
   uint32_t m_id;
-  uint32_t id_bus;
-  Time m_interval;
+
+  int cont_p;
+  int cont_q;
+  int id_bus;
+  int cont_b;
+  int cont_v;
 };
 
-} // namespace ns3
-
-#endif /* BUS_SERVER_H */
+}
+#endif /* BUS_SERVER_H_ */

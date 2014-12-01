@@ -2,7 +2,7 @@
 #ifndef __AGENTS_HELPER_H__
 #define __AGENTS_HELPER_H__
 
-#include "ns3/agents.h"
+#include "ns3/wrapper.h"
 
 namespace ns3 {
 
